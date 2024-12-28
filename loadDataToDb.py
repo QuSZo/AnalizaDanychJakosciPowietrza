@@ -40,7 +40,7 @@ def process_and_load_files(root_directory, session_maker):
 config = Config.load_json("appsettings.json")
 engine = create_engine(config.Postgres.ConnectionString)
 Session = sessionmaker(bind=engine)
-dataDirectory = "data"
+dataDirectory = "data-2022"
 process_and_load_files(dataDirectory, Session)
 
 print("All files have been processed and loaded.")

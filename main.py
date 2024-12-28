@@ -27,12 +27,10 @@ def index0():
 def index1():
     if request.method == 'POST':
         try:
-            allMonths = ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"]
-            month = request.form['month']
-            if month not in allMonths:
-                raise ValueError("Nie ma takiego miesiąca")
+            month = int(request.form['month'])
+            sensor = request.form['sensor']
 
-            images = data_analysis_comparison()
+            images = data_analysis_comparison(month, sensor)
             return render_template('index.html', images=images)
         except ValueError as e:
             return render_template('index.html', error=str(e))

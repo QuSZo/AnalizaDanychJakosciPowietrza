@@ -9,12 +9,17 @@ import io
 import base64
 
 
-def fetch_data(session_maker, parameter, day_range=None):
+def fetch_data(session_maker, parameter, day_range=None, month=None, year=None):
     stmt = select(SensorData)
 
     if day_range is not None:
         previous_week = datetime.now() - timedelta(days=day_range)
         stmt = stmt.where(SensorData.Datetime >= previous_week)
+    elif month is not None and year is not None:
+        dateFrom = datetime(year, month, 1)
+        dateTo = datetime(year, month+1, 1)
+        stmt = stmt.where(SensorData.Datetime >= dateFrom)
+        stmt = stmt.where(SensorData.Datetime < dateTo)
 
     stmt = stmt.where(SensorData.Parameter == parameter).order_by(SensorData.Datetime)
 
@@ -62,5 +67,20 @@ def data_analysis(days):
     return images
 
 
-def data_analysis_comparison():
-    return []
+def data_analysis_comparison(month, sensor):
+    config = Config.load_json("appsettings.json")
+    engine = create_engine(config.Postgres.ConnectionString)
+    Session = sessionmaker(bind=engine)
+    images = []
+
+    for year in [2022, 2023, 2024]:
+        sensorData = fetch_data(Session, sensor, None, month, year)
+
+        data = pd.DataFrame([{
+            "Datetime": obj.Datetime,
+            "Value": obj.Value
+        } for obj in sensorData])
+
+        images.append(create_plot(data, sensor))
+
+    return images
