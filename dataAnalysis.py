@@ -5,6 +5,8 @@ from Entities.SensorData import SensorData
 from utils.Config import Config
 from sqlalchemy import create_engine, select
 import matplotlib.pyplot as plt
+import io
+import base64
 
 
 def fetch_data(session_maker, parameter, day_range=None):
@@ -30,20 +32,35 @@ def create_plot(data_plot, parameter):
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
-    plt.show()
+
+    img = io.BytesIO()
+    plt.savefig(img, format='png')
+    img.seek(0)
+    plt.close()
+
+    plot_data = base64.b64encode(img.getvalue()).decode('utf8')
+    img.close()
+    return plot_data
 
 
-config = Config.load_json("appsettings.json")
-engine = create_engine(config.Postgres.ConnectionString)
-Session = sessionmaker(bind=engine)
+def data_analysis(days):
+    config = Config.load_json("appsettings.json")
+    engine = create_engine(config.Postgres.ConnectionString)
+    Session = sessionmaker(bind=engine)
+    images = []
 
-for parameter in ["co", "no2", "pm10", "pm25"]:
-    sensorData = fetch_data(Session, parameter)
+    for parameter in ["co", "no2", "pm10", "pm25"]:
+        sensorData = fetch_data(Session, parameter, days)
 
-    data = pd.DataFrame([{
-        "Datetime": obj.Datetime,
-        "Value": obj.Value
-    } for obj in sensorData])
+        data = pd.DataFrame([{
+            "Datetime": obj.Datetime,
+            "Value": obj.Value
+        } for obj in sensorData])
 
-    create_plot(data, parameter)
+        images.append(create_plot(data, parameter))
 
+    return images
+
+
+def data_analysis_comparison():
+    return []
